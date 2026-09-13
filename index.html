@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="青空">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>青空 — Japonés</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#131a2a;--panel2:#192235;--input:#0d1423;
+  --text:#f8fafc;--muted:#94a3b8;--accent:#69b3f3;--accent2:#559bd9;
+  --border:#2a354b;--danger:#47171d;--dangerText:#fecaca;
+}
+*{box-sizing:border-box}
+html{margin:0;min-height:100%;background:#0b1020;overscroll-behavior-y:none}
+body{margin:0;min-height:100vh;background:linear-gradient(180deg,#0b1020,#111827);color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button,input{font:inherit}
+button{-webkit-tap-highlight-color:transparent}
+.app{width:min(720px,100%);margin:0 auto;padding:calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 34px)}
+.hidden{display:none!important}
+.phrase-hero{padding:30px 0 28px;margin:0 0 18px;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.phrase-hero.hidden{display:none!important}
+.home-phrase{margin:0;max-width:100%;white-space:nowrap;text-align:center;font-size:30px;font-weight:760;line-height:1.2;letter-spacing:.01em;color:var(--text)}
+.home-phrase .kanji{color:var(--accent)}
+.subtitle{margin-top:7px;color:var(--muted);font-size:15px}
+.small{color:var(--muted);font-size:13px}
+.section-title{font-size:18px;margin:0 0 12px}
+.panel{background:rgba(19,26,42,.9);border:1px solid var(--border);border-radius:22px;padding:16px;margin-top:16px}
+.primary,.secondary,.danger,.icon-btn{
+  border:1px solid var(--border);border-radius:14px;padding:14px 16px;background:var(--panel2);color:var(--text);font-weight:750
+}
+.primary{background:var(--accent);border-color:var(--accent)}
+.danger{background:var(--danger);color:var(--dangerText)}
+.icon-btn{padding:10px 12px}
+.full{width:100%}
+.folder-list{display:grid;gap:10px}
+.folder{
+  position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;
+  background:rgba(19,26,42,.92);border:1px solid var(--border);border-radius:18px;padding:14px 16px;
+}
+.folder-main{cursor:pointer;min-width:0}
+.folder-name{font-size:18px;font-weight:780;line-height:1.08;margin-bottom:2px;padding-right:4px}
+.folder-count{color:var(--muted);font-size:13px;line-height:1.08}
+.swipe-host{position:relative;overflow:hidden;touch-action:pan-y}
+.swipe-actions{
+  position:absolute;top:0;right:0;bottom:0;width:var(--swipe-actions-width,132px);
+  display:grid;grid-template-columns:1fr 1fr;z-index:2;
+  transform:translateX(100%);transition:transform .24s cubic-bezier(.2,.8,.2,1);will-change:transform
+}
+.swipe-action{
+  border:0;padding:0;margin:0;display:flex;align-items:center;justify-content:center;
+  background:#22324c;color:#dbe8ff;cursor:pointer
+}
+.swipe-action + .swipe-action{border-left:1px solid rgba(255,255,255,.14)}
+.swipe-action.delete{background:#c83b4d;color:#fff}
+.swipe-action svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.swipe-foreground{
+  position:relative;z-index:1
+}
+/* El contenido queda fijo. Solo entra el panel de acciones desde la derecha. */
+.swipe-host.swipe-open .swipe-actions{transform:translateX(0)}
+/* Las acciones permanecen totalmente ocultas en reposo; aparecen solo al empezar a deslizar o al abrir. */
+.swipe-actions{visibility:hidden}
+.swipe-host.swipe-dragging .swipe-actions,.swipe-host.swipe-open .swipe-actions{visibility:visible}
+.swipe-dots{
+  width:38px;height:38px;padding:0;border:0;background:transparent;color:#d5dae3;
+  font-size:27px;line-height:30px;font-weight:800;border-radius:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;align-self:center;position:relative;z-index:3;
+  transition:transform .24s cubic-bezier(.2,.8,.2,1);will-change:transform
+}
+.swipe-host.swipe-open .swipe-dots{transform:translateX(calc(-1 * var(--swipe-actions-width,132px)))}
+.swipe-dots:active{background:rgba(255,255,255,.06)}
+.folder.swipe-host{display:block;padding:0;border:0;background:transparent;border-radius:18px;--swipe-actions-width:136px}
+.folder.swipe-host .swipe-foreground{
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;
+  background:#131a2a;border:1px solid var(--border);border-radius:18px;padding:14px 16px
+}
+.item.swipe-host{display:block;padding:0;border:0;background:transparent;border-radius:13px;--swipe-actions-width:116px}
+.item.swipe-host .swipe-foreground{
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;
+  background:var(--input);border:1px solid var(--border);border-radius:13px;padding:11px 12px
+}
+ .item.swipe-host .swipe-action svg{width:21px;height:21px}
+/* Las acciones se superponen exactamente al extremo derecho del elemento.
+   El texto no se desplaza y no aparece ningún hueco entre la tarjeta y las acciones. */
+.form{display:grid;gap:10px}
+input{width:100%;padding:14px 15px;border-radius:13px;border:1px solid var(--border);background:var(--input);color:var(--text);outline:none}
+input:focus{border-color:#64748b}
+#cardForm .primary{padding:12px 15px}
+.card-wrap{perspective:1200px;margin:6px 0 8px}
+.card{height:330px;position:relative;transform-style:preserve-3d;transition:transform .42s ease;cursor:pointer}
+.card.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:24px;border:1px solid var(--border);backface-visibility:hidden;
+display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;
+background:linear-gradient(145deg,#172033,#0f172a);box-shadow:0 18px 50px rgba(0,0,0,.30)}
+.back{transform:rotateY(180deg);background:linear-gradient(145deg,#202a3d,#131a2a)}
+.jp,.es{position:absolute;left:28px;right:28px;top:50%;transform:translateY(-50%);word-break:break-word}
+.jp{font-size:52px;font-weight:800;line-height:1.18}
+.es{font-size:36px;font-weight:800;line-height:1.22}
+.back .romaji{position:absolute;left:28px;right:28px;top:calc(50% + 38px);font-size:18px;color:var(--muted)}
+.actions{display:block}
+.actions .primary{width:100%}
+/* Ritmo vertical de la pantalla de estudio: las cuatro zonas se separan solo con aire. */
+.backline{display:flex;align-items:center;margin-bottom:14px}
+.backlink{background:none;border:0;color:var(--text);padding:8px 0;font-weight:700;font-size:15px}
+#studyView #addCardPanel{margin-top:24px}
+#studyView #addCardPanel + .panel{margin-top:24px}
+.folder-title-row{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-right:24px}
+.folder-title-row h1{font-size:28px;margin:0}
+.folder-title-row .small{font-size:15px;white-space:nowrap}
+.completion{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center}
+.completion-icon{width:74px;height:74px;color:var(--accent);margin-bottom:22px;animation:completePop .46s cubic-bezier(.2,.8,.25,1) both}
+.completion-icon svg{width:100%;height:100%;display:block;overflow:visible}
+.completion-title{font-size:27px;font-weight:800;line-height:1.2;animation:completeFade .42s ease .08s both}
+.completion-ja{margin-top:12px;font-size:19px;color:var(--accent);font-weight:650;animation:completeFade .42s ease .15s both}
+@keyframes completePop{0%{opacity:0;transform:scale(.82)}70%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+@keyframes completeFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.empty-card{color:var(--muted);font-size:16px;max-width:260px;line-height:1.45}
+.list{display:grid;gap:8px;max-height:360px;overflow:auto}
+.item{position:relative;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;background:var(--input);border:1px solid var(--border);border-radius:13px;padding:11px 12px}
+.item strong{display:block;font-size:17px}.item span{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+hr{border:0;border-top:1px solid var(--border);margin:16px 0}
+@media(max-width:520px){
+  .phrase-hero{padding:28px 0 26px;margin-bottom:16px}
+  .home-phrase{font-size:28px}
+  .card{height:310px}.jp{font-size:46px}.es{font-size:31px}
+  .folder{padding:14px 16px}
+  .folder.swipe-host{padding:0}
+}
+</style>
+</head>
+<body>
+<main class="app">
+
+<section id="homeView">
+  <div id="phraseHero" class="phrase-hero hidden" aria-live="polite">
+    <p id="homePhrase" class="home-phrase"></p>
+  </div>
+
+  <div id="allFolder" class="folder" style="margin-bottom:10px">
+    <div class="folder-main">
+      <div class="folder-name">Todas las tarjetas</div>
+      <div id="allCount" class="folder-count">0 tarjetas</div>
+    </div>
+  </div>
+
+  <div id="folderList" class="folder-list"></div>
+
+  <section class="panel">
+    <h2 class="section-title">Nueva carpeta</h2>
+    <form id="folderForm" class="form">
+      <input id="folderName" autocomplete="off" required>
+      <button class="primary full" type="submit">Crear carpeta</button>
+    </form>
+  </section>
+</section>
+
+<section id="studyView" class="hidden">
+  <div class="backline">
+    <button id="backHome" class="backlink">← Carpetas</button>
+  </div>
+  <div class="folder-title-row">
+    <h1 id="studyTitle">Carpeta</h1>
+    <div id="counter" class="small"></div>
+  </div>
+
+  <section class="card-wrap">
+    <div id="card" class="card">
+      <div id="frontFace" class="face">
+        <div id="jp" class="jp">—</div>
+      </div>
+      <div id="backFace" class="face back">
+        <div id="es" class="es">—</div>
+        <div id="romaji" class="romaji"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button id="next" class="primary">Siguiente</button>
+  </div>
+
+  <section id="addCardPanel" class="panel">
+    <h2 class="section-title">Agregar tarjeta</h2>
+    <form id="cardForm" class="form">
+      <input id="fjp" placeholder="Japonés" required>
+      <input id="fromaji" placeholder="Romaji">
+      <input id="fes" placeholder="Español" required>
+      <button class="primary full" type="submit">Guardar tarjeta</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2 class="section-title">Tarjetas de este grupo</h2>
+    <div id="cardList" class="list"></div>
+  </section>
+</section>
+
+</main>
+
+<script>
+const STORAGE_KEY="aozora_flashcards_v2";
+
+const KANJI_FOLDER_ID="kanji";
+const DEFAULT_FOLDERS=[
+  {id:KANJI_FOLDER_ID,name:"Kanji",system:true},
+  {id:"saludos",name:"Saludos"},
+  {id:"dias-semana",name:"Días de la semana"},
+  {id:"lugares",name:"Lugares"},
+  {id:"comida",name:"Comida"},
+  {id:"verbos",name:"Verbos"}
+];
+
+let state=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null") || {
+  folders: DEFAULT_FOLDERS,
+  cards: []
+};
+
+let currentFolderId="all";
+let studyDeck=[];
+let studyIndex=0;
+let roundComplete=false;
+let lastCompletedOrder=[];
+
+const $=id=>document.getElementById(id);
+
+// La carpeta Kanji es fija y se agrega también a instalaciones anteriores sin borrar datos.
+function ensureKanjiFolder(){
+  state.folders=Array.isArray(state.folders)?state.folders:[];
+  let folder=state.folders.find(f=>f.id===KANJI_FOLDER_ID);
+  if(!folder){
+    state.folders.unshift({id:KANJI_FOLDER_ID,name:"Kanji",system:true});
+  }else{
+    folder.name="Kanji";
+    folder.system=true;
+  }
+  state.cards=Array.isArray(state.cards)?state.cards:[];
+}
+ensureKanjiFolder();
+
+// Desde esta versión cada tarjeta pertenece a una sola carpeta.
+// Para instalaciones anteriores conservamos la primera carpeta válida de cada tarjeta.
+function ensureSingleFolderPerCard(){
+  const validIds=new Set(state.folders.map(f=>f.id));
+  state.cards.forEach(c=>{
+    const ids=(Array.isArray(c.folderIds)?c.folderIds:[]).filter(id=>validIds.has(id));
+    if(ids.includes(KANJI_FOLDER_ID)) c.folderIds=[KANJI_FOLDER_ID];
+    else c.folderIds=ids.length?[ids[0]]:[];
+  });
+}
+ensureSingleFolderPerCard();
+localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+
+const KANJI_RE=/[\u3400-\u4DBF\u4E00-\u9FFF々]/g;
+const KANJI_TEST_RE=/[\u3400-\u4DBF\u4E00-\u9FFF々]/;
+const ALLOWED_KANA_RE=/^[\u3040-\u309F\u30A0-\u30FFー・\s。、！？!?]+$/;
+
+// Banco offline de frases simples. "w" es una palabra que debe existir EXACTAMENTE
+// en una tarjeta de vocabulario. "k" es la forma con kanji que puede mostrarse
+// solo si todos esos kanji están dentro de la carpeta Kanji. "t" es gramática libre.
+const W=(w,k=null)=>({w,k});
+const T=t=>({t});
+const PHRASE_BANK=[
+  [W("おはようございます")],
+  [W("こんにちは")],
+  [W("こんばんは")],
+  [W("ありがとうございます")],
+  [W("すみません")],
+  [W("さようなら")],
+  [W("いただきます")],
+  [W("ごちそうさまでした")],
+  [W("いってきます")],
+  [W("いってらっしゃい")],
+  [W("ただいま")],
+  [W("おかえりなさい")],
+  [W("はじめまして")],
+  [W("よろしくおねがいします","よろしくお願いします")],
+  [W("だいじょうぶです","大丈夫です")],
+  [W("わかりました","分かりました")],
+  [W("わかりません","分かりません")],
+  [W("わたし","私"),T("は"),W("がくせい","学生"),T("です。")],
+  [W("わたし","私"),T("は"),W("かいしゃいん","会社員"),T("です。")],
+  [W("わたし","私"),T("は"),W("にほんじん","日本人"),T("です。")],
+  [W("これ"),T("は"),W("ほん","本"),T("です。")],
+  [W("それ"),T("は"),W("じしょ","辞書"),T("です。")],
+  [W("あれ"),T("は"),W("かばん"),T("です。")],
+  [W("ここ"),T("は"),W("がっこう","学校"),T("です。")],
+  [W("そこ"),T("は"),W("ぎんこう","銀行"),T("です。")],
+  [W("あそこ"),T("は"),W("えき","駅"),T("です。")],
+  [W("うち"),T("に"),W("かえります","帰ります"),T("。")],
+  [W("かいしゃ","会社"),T("で"),W("はたらきます","働きます"),T("。")],
+  [W("たたみ","畳"),T("で"),W("ねます","寝ます"),T("。")],
+  [W("みず","水"),T("を"),W("のみます","飲みます"),T("。")],
+  [W("すし","寿司"),T("を"),W("たべます","食べます"),T("。")],
+  [W("パン"),T("を"),W("たべます","食べます"),T("。")],
+  [W("コーヒー"),T("を"),W("のみます","飲みます"),T("。")],
+  [W("おんがく","音楽"),T("を"),W("ききます","聞きます"),T("。")],
+  [W("ほん","本"),T("を"),W("よみます","読みます"),T("。")],
+  [W("てがみ","手紙"),T("を"),W("かきます","書きます"),T("。")],
+  [W("テレビ"),T("を"),W("みます","見ます"),T("。")],
+  [W("えいが","映画"),T("を"),W("みます","見ます"),T("。")],
+  [W("しゃしん","写真"),T("を"),W("とります","撮ります"),T("。")],
+  [W("にほんご","日本語"),T("を"),W("べんきょうします","勉強します"),T("。")],
+  [W("にほんご","日本語"),T("を"),W("はなします","話します"),T("。")],
+  [W("えいご","英語"),T("を"),W("はなします","話します"),T("。")],
+  [W("でんわ","電話"),T("を"),W("します"),T("。")],
+  [W("しごと","仕事"),T("を"),W("します"),T("。")],
+  [W("うんどう","運動"),T("を"),W("します"),T("。")],
+  [W("かいもの","買い物"),T("を"),W("します"),T("。")],
+  [W("がっこう","学校"),T("に"),W("いきます","行きます"),T("。")],
+  [W("きょうと","京都"),T("に"),W("いきます","行きます"),T("。")],
+  [W("おおさか","大阪"),T("から"),W("きょうと","京都"),T("まで"),W("いきます","行きます"),T("。")],
+  [W("にほん","日本"),T("から"),W("きました","来ました"),T("。")],
+  [W("でんしゃ","電車"),T("で"),W("いきます","行きます"),T("。")],
+  [W("くるま","車"),T("で"),W("いきます","行きます"),T("。")],
+  [W("あるいて","歩いて"),W("いきます","行きます"),T("。")],
+  [W("ともだち","友達"),T("と"),W("いきます","行きます"),T("。")],
+  [W("ひとり","一人"),T("で"),W("いきます","行きます"),T("。")],
+  [W("ふたり","二人"),T("で"),W("いきます","行きます"),T("。")],
+  [W("ともだち","友達"),T("に"),W("あいます","会います"),T("。")],
+  [W("せんせい","先生"),T("と"),W("はなします","話します"),T("。")],
+  [W("まいにち","毎日"),W("べんきょうします","勉強します"),T("。")],
+  [W("まいばん","毎晩"),W("ねます","寝ます"),T("。")],
+  [W("あさ","朝"),W("おきます","起きます"),T("。")],
+  [W("ばんごはん","晩ご飯"),T("を"),W("たべます","食べます"),T("。")],
+  [W("きょう","今日"),T("、"),W("がっこう","学校"),T("に"),W("いきます","行きます"),T("。")],
+  [W("あした","明日"),T("、"),W("とうきょう","東京"),T("に"),W("いきます","行きます"),T("。")],
+  [W("きのう","昨日"),T("、"),W("うち"),T("に"),W("かえりました","帰りました"),T("。")],
+  [W("にちようび","日曜日"),T("は"),W("やすみ","休み"),T("です。")],
+  [W("げつようび","月曜日"),T("は"),W("がっこう","学校"),T("です。")],
+  [W("すし","寿司"),T("が"),W("すき","好き"),T("です。")],
+  [W("ねこ","猫"),T("が"),W("すき","好き"),T("です。")],
+  [W("いぬ","犬"),T("が"),W("すき","好き"),T("です。")],
+  [W("にほん","日本"),T("が"),W("すき","好き"),T("です。")],
+  [W("にほんご","日本語"),T("が"),W("すき","好き"),T("です。")],
+  [W("ねこ","猫"),T("が"),W("います"),T("。")],
+  [W("いぬ","犬"),T("が"),W("います"),T("。")],
+  [W("ほん","本"),T("が"),W("あります"),T("。")],
+  [W("へや","部屋"),T("に"),W("ねこ","猫"),T("が"),W("います"),T("。")],
+  [W("つくえ","机"),T("の"),W("うえ","上"),T("に"),W("ほん","本"),T("が"),W("あります"),T("。")],
+  [W("これ"),T("を"),W("ください"),T("。")],
+  [W("みず","水"),T("を"),W("ください"),T("。")],
+  [W("これ"),T("は"),W("なん","何"),T("ですか。")],
+  [W("えき","駅"),T("は"),W("どこ"),T("ですか。")],
+  [W("これ"),T("は"),W("いくら"),T("ですか。")],
+  [W("かいしゃ","会社"),T("は"),W("どちら"),T("ですか。")],
+  [W("もういちど","もう一度"),W("おねがいします","お願いします"),T("。")],
+  [W("ゆっくり"),W("はなしてください","話してください"),T("。")]
+];
+
+function normalizeWord(text){
+  return String(text||"").trim().replace(/[。！？!?]+$/g,"").replace(/\s+/g,"");
+}
+
+function vocabularyCards(){
+  return state.cards.filter(c=>!(c.folderIds||[]).includes(KANJI_FOLDER_ID));
+}
+
+function vocabularySet(){
+  return new Set(vocabularyCards().map(c=>normalizeWord(c.jp)).filter(Boolean));
+}
+
+function allowedKanjiSet(){
+  const set=new Set();
+  cardsForFolder(KANJI_FOLDER_ID).forEach(c=>{
+    const matches=String(c.jp||"").match(KANJI_RE)||[];
+    matches.forEach(ch=>set.add(ch));
+  });
+  return set;
+}
+
+function canUseKanjiForm(form,allowed){
+  const kanji=String(form||"").match(KANJI_RE)||[];
+  return kanji.length>0 && kanji.every(ch=>allowed.has(ch));
+}
+
+function phraseIsAvailable(parts,vocab){
+  return parts.every(part=>!part.w || vocab.has(normalizeWord(part.w)));
+}
+
+function renderPhraseParts(parts,allowed){
+  return parts.map(part=>{
+    if(part.t!==undefined) return part.t;
+    return part.k && canUseKanjiForm(part.k,allowed) ? part.k : part.w;
+  }).join("");
+}
+
+function highlightKanji(text){
+  const frag=document.createDocumentFragment();
+  for(const ch of text){
+    if(KANJI_TEST_RE.test(ch)){
+      const span=document.createElement("span");
+      span.className="kanji";
+      span.textContent=ch;
+      frag.append(span);
+    }else{
+      frag.append(document.createTextNode(ch));
+    }
+  }
+  return frag;
+}
+
+let homePhraseText="";
+function chooseHomePhrase(){
+  const vocab=vocabularySet();
+  if(!vocab.size) return "";
+  const allowed=allowedKanjiSet();
+  const available=PHRASE_BANK.filter(parts=>phraseIsAvailable(parts,vocab));
+  if(!available.length) return "";
+  const parts=available[Math.floor(Math.random()*available.length)];
+  return renderPhraseParts(parts,allowed);
+}
+
+function fitPhraseToOneLine(){
+  const el=$("homePhrase");
+  if(!el || !el.textContent) return;
+  const max=30,min=20;
+  let size=window.innerWidth<=520?28:max;
+  el.style.fontSize=size+"px";
+  while(el.scrollWidth>el.clientWidth && size>min){
+    size-=1;
+    el.style.fontSize=size+"px";
+  }
+}
+
+function renderHomePhrase(forceNew=false){
+  const hero=$("phraseHero");
+  const phrase=$("homePhrase");
+  if(forceNew || !homePhraseText) homePhraseText=chooseHomePhrase();
+  if(!homePhraseText){
+    hero.classList.add("hidden");
+    phrase.replaceChildren();
+    return;
+  }
+  hero.classList.remove("hidden");
+  phrase.replaceChildren(highlightKanji(homePhraseText));
+  requestAnimationFrame(fitPhraseToOneLine);
+}
+
+window.addEventListener("resize",()=>requestAnimationFrame(fitPhraseToOneLine));
+
+function closeAllSwipes(except=null){
+  document.querySelectorAll(".swipe-host.swipe-open").forEach(row=>{
+    if(row!==except) row.classList.remove("swipe-open");
+  });
+}
+
+function makeSwipeActions(row,content,onEdit,onDelete){
+  row.classList.add("swipe-host");
+
+  const actions=document.createElement("div");
+  actions.className="swipe-actions";
+
+  const edit=document.createElement("button");
+  edit.type="button";
+  edit.className="swipe-action";
+  edit.setAttribute("aria-label","Editar");
+  edit.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+
+  const del=document.createElement("button");
+  del.type="button";
+  del.className="swipe-action delete";
+  del.setAttribute("aria-label","Eliminar");
+  del.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>`;
+
+  const foreground=document.createElement("div");
+  foreground.className="swipe-foreground";
+
+  const dots=document.createElement("button");
+  dots.type="button";
+  dots.className="swipe-dots";
+  dots.setAttribute("aria-label","Opciones");
+  dots.textContent="⋮";
+
+  foreground.append(content,dots);
+  actions.append(edit,del);
+  row.append(actions,foreground);
+
+  const setOpen=open=>{
+    row.classList.remove("swipe-dragging");
+    closeAllSwipes(open?row:null);
+    row.classList.toggle("swipe-open",open);
+    actions.style.transform="";
+    dots.style.transform="";
+  };
+
+  dots.addEventListener("click",e=>{
+    e.stopPropagation();
+    setOpen(!row.classList.contains("swipe-open"));
+  });
+
+  edit.addEventListener("click",e=>{
+    e.stopPropagation();
+    setOpen(false);
+    onEdit();
+  });
+
+  del.addEventListener("click",e=>{
+    e.stopPropagation();
+    setOpen(false);
+    onDelete();
+  });
+
+  let startX=0,startY=0,currentX=0,tracking=false,moved=false;
+  const actionWidth=()=>parseFloat(getComputedStyle(row).getPropertyValue("--swipe-actions-width"))||132;
+
+  foreground.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1)return;
+    tracking=true;moved=false;
+    row.classList.add("swipe-dragging");
+    startX=e.touches[0].clientX;startY=e.touches[0].clientY;currentX=startX;
+    actions.style.transition="none";
+    dots.style.transition="none";
+  },{passive:true});
+
+  foreground.addEventListener("touchmove",e=>{
+    if(!tracking||e.touches.length!==1)return;
+    const x=e.touches[0].clientX,y=e.touches[0].clientY;
+    const dx=x-startX,dy=y-startY;
+    if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>8)return;
+    if(Math.abs(dx)>5)moved=true;
+    const w=actionWidth();
+    const base=row.classList.contains("swipe-open")?-w:0;
+    const tx=Math.max(-w,Math.min(0,base+dx));
+    const reveal=w+tx;
+    actions.style.transform=`translateX(${reveal}px)`;
+    dots.style.transform=`translateX(${tx}px)`;
+    currentX=x;
+    if(Math.abs(dx)>8)e.preventDefault();
+  },{passive:false});
+
+  foreground.addEventListener("touchend",()=>{
+    if(!tracking)return;
+    tracking=false;
+    row.classList.remove("swipe-dragging");
+    actions.style.transition="";
+    dots.style.transition="";
+    const dx=currentX-startX;
+    const wasOpen=row.classList.contains("swipe-open");
+    if((!wasOpen&&dx<-30)||(wasOpen&&dx>-30)) setOpen(!wasOpen);
+    else{ actions.style.transform=""; dots.style.transform=""; }
+  });
+
+  foreground.addEventListener("click",e=>{
+    if(moved){e.preventDefault();e.stopPropagation();moved=false;return}
+    if(row.classList.contains("swipe-open")&&!e.target.closest(".swipe-dots")){
+      e.preventDefault();e.stopPropagation();setOpen(false);
+    }
+  },true);
+}
+
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".swipe-host")) closeAllSwipes();
+});
+
+function save(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  homePhraseText="";
+  renderHome();
+}
+
+function slugId(){
+  return "f_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);
+}
+function cardId(){
+  return "c_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);
+}
+function countText(n){return n+" "+(n===1?"tarjeta":"tarjetas")}
+function getFolder(id){return state.folders.find(f=>f.id===id)}
+function cardsForFolder(id){
+  if(id==="all") return state.cards;
+  return state.cards.filter(c=>(c.folderIds||[]).includes(id));
+}
+
+function renderHome(){
+  $("folderList").innerHTML="";
+  $("allCount").textContent=countText(state.cards.length);
+  renderHomePhrase();
+
+  state.folders.forEach(folder=>{
+    const row=document.createElement("div");
+    row.className="folder";
+
+    const main=document.createElement("div");
+    main.className="folder-main";
+    main.innerHTML=`<div class="folder-name"></div><div class="folder-count"></div>`;
+    main.querySelector(".folder-name").textContent=folder.name;
+    main.querySelector(".folder-count").textContent=countText(cardsForFolder(folder.id).length);
+    main.onclick=()=>openStudy(folder.id);
+
+    if(folder.id===KANJI_FOLDER_ID){
+      row.append(main);
+    }else{
+      makeSwipeActions(
+        row,main,
+        ()=>{
+          const name=prompt("Nombre de la carpeta:",folder.name);
+          if(name===null)return;
+          const n=name.trim();
+          if(!n)return;
+          folder.name=n; save();
+        },
+        ()=>{
+          const n=cardsForFolder(folder.id).length;
+          const msg=n
+            ? `¿Eliminar "${folder.name}" y sus ${n} ${n===1?"tarjeta":"tarjetas"}?`
+            : `¿Eliminar "${folder.name}"?`;
+          if(!confirm(msg))return;
+          state.cards=state.cards.filter(c=>!(c.folderIds||[]).includes(folder.id));
+          state.folders=state.folders.filter(f=>f.id!==folder.id);
+          save();
+        }
+      );
+    }
+    $("folderList").append(row);
+  });
+}
+
+$("allFolder").onclick=()=>openStudy("all");
+
+$("folderForm").onsubmit=e=>{
+  e.preventDefault();
+  const name=$("folderName").value.trim();
+  if(!name)return;
+  state.folders.push({id:slugId(),name});
+  save();
+  e.target.reset();
+};
+
+function shuffleCards(cards){
+  const arr=[...cards];
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function sameOrder(a,b){
+  return a.length===b.length && a.every((c,i)=>c.id===b[i]?.id);
+}
+
+function startNewRound({avoidLast=false}={}){
+  const cards=cardsForFolder(currentFolderId);
+  let nextDeck=shuffleCards(cards);
+  if(avoidLast && cards.length>1 && sameOrder(nextDeck,lastCompletedOrder)){
+    for(let tries=0;tries<8 && sameOrder(nextDeck,lastCompletedOrder);tries++) nextDeck=shuffleCards(cards);
+    if(sameOrder(nextDeck,lastCompletedOrder)) nextDeck=[...nextDeck.slice(1),nextDeck[0]];
+  }
+  studyDeck=nextDeck;
+  studyIndex=0;
+  roundComplete=false;
+  renderStudyList();
+  showCurrentCard();
+}
+
+function openStudy(folderId){
+  currentFolderId=folderId;
+  lastCompletedOrder=[];
+  $("homeView").classList.add("hidden");
+  $("studyView").classList.remove("hidden");
+
+  const folder=getFolder(folderId);
+  $("studyTitle").textContent=folderId==="all"?"Todas las tarjetas":folder.name;
+  $("addCardPanel").classList.toggle("hidden",folderId==="all");
+
+  startNewRound();
+  window.scrollTo(0,0);
+}
+
+$("backHome").onclick=()=>{
+  studyDeck=[];
+  studyIndex=0;
+  roundComplete=false;
+  lastCompletedOrder=[];
+  $("studyView").classList.add("hidden");
+  $("homeView").classList.remove("hidden");
+  renderHome();
+  window.scrollTo(0,0);
+};
+
+const COMPLETION_ICONS=[
+  // 3. Destellos / estrellas
+  `<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M40 8l4.3 14.7L59 27l-14.7 4.3L40 46l-4.3-14.7L21 27l14.7-4.3L40 8Z" fill="currentColor" stroke="none"/><path d="M62 12l1.8 6.2L70 20l-6.2 1.8L62 28l-1.8-6.2L54 20l6.2-1.8L62 12ZM17 42l2.1 7L26 51l-6.9 2L17 60l-2-7L8 51l7-2 2-7Z" fill="currentColor" stroke="none"/></svg>`,
+  // 4. Libro
+  `<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22c10-4 20-2 28 5v36c-8-7-18-9-28-5V22Z"/><path d="M68 22c-10-4-20-2-28 5v36c8-7 18-9 28-5V22Z"/><path d="M40 12v7M25 14l4 6M55 14l-4 6"/></svg>`,
+  // 5. Sakura
+  `<svg viewBox="0 0 80 80" fill="currentColor" aria-hidden="true"><path d="M40 35C24 27 24 11 40 6c16 5 16 21 0 29Z"/><path d="M45 39c5-17 21-21 31-7-1 17-17 21-31 7Z"/><path d="M43 46c17-1 25 13 15 26-16 5-24-9-15-26Z"/><path d="M35 46c9 17 1 31-15 26-10-13-2-27 15-26Z"/><path d="M35 39C21 53 5 49 4 32c10-14 26-10 31 7Z"/><circle cx="40" cy="41" r="5" fill="#0b1020"/></svg>`,
+  // 6. Banderín
+  `<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 68V12"/><path d="M26 15c13-6 23 5 36-1v25c-13 6-23-5-36 1V15Z" fill="currentColor" stroke="none"/></svg>`,
+  // 7. Montaña / progreso
+  `<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 65l18-23 10 10 18-25 16 38"/><path d="M55 27V10"/><path d="M56 11h16l-5 6 5 6H56" fill="currentColor" stroke="none"/></svg>`,
+  // 8. Sol naciente
+  `<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M20 58a20 20 0 0 1 40 0" fill="currentColor" stroke="none"/><path d="M40 8v10M16 18l7 7M64 18l-7 7M7 42h10M63 42h10M10 58h60"/></svg>`,
+  // 9. Copa
+  `<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M25 12h30v15c0 15-6 24-15 24S25 42 25 27V12Z" fill="currentColor" stroke="none"/><path d="M25 18H13v8c0 10 6 16 16 16M55 18h12v8c0 10-6 16-16 16M40 51v11M29 68h22"/></svg>`
+];
+
+const COMPLETION_PHRASES=[
+  "よくできました！",
+  "おつかれさま！",
+  "すごい！",
+  "おめでとう！",
+  "がんばりました！",
+  "やったね！",
+  "すばらしい！"
+];
+
+function randomFrom(arr){return arr[Math.floor(Math.random()*arr.length)]}
+
+function clearCompletion(){
+  const existing=$("frontFace").querySelector(".completion");
+  if(existing) existing.remove();
+  $("jp").classList.remove("hidden");
+  $("backFace").classList.remove("hidden");
+}
+
+function showCurrentCard(){
+  clearCompletion();
+  $("card").classList.remove("flipped");
+
+  if(!studyDeck.length){
+    $("jp").textContent="—";
+    $("es").textContent="Todavía no hay tarjetas";
+    $("romaji").textContent="";
+    $("counter").textContent="0 / 0";
+    return;
+  }
+
+  const c=studyDeck[studyIndex];
+  $("jp").textContent=c.jp;
+  $("es").textContent=c.es;
+  $("romaji").textContent=c.romaji||"";
+  $("counter").textContent=(studyIndex+1)+" / "+studyDeck.length;
+}
+
+function showCompletion(){
+  if(!studyDeck.length)return;
+  roundComplete=true;
+  lastCompletedOrder=[...studyDeck];
+  $("card").classList.remove("flipped");
+  $("jp").classList.add("hidden");
+  $("backFace").classList.add("hidden");
+  $("counter").textContent=studyDeck.length+" / "+studyDeck.length;
+
+  const completion=document.createElement("div");
+  completion.className="completion";
+  completion.innerHTML=`
+    <div class="completion-icon">${randomFrom(COMPLETION_ICONS)}</div>
+    <div class="completion-title">¡Carpeta completada!</div>
+    <div class="completion-ja">${randomFrom(COMPLETION_PHRASES)}</div>`;
+  $("frontFace").append(completion);
+}
+
+$("card").onclick=()=>{
+  if(studyDeck.length && !roundComplete) $("card").classList.toggle("flipped");
+};
+
+$("next").onclick=()=>{
+  if(!studyDeck.length)return;
+  if(roundComplete){
+    startNewRound({avoidLast:true});
+    return;
+  }
+  if(studyIndex>=studyDeck.length-1){
+    showCompletion();
+    return;
+  }
+  studyIndex+=1;
+  showCurrentCard();
+};
+
+$("cardForm").onsubmit=e=>{
+  e.preventDefault();
+  const jp=$("fjp").value.trim();
+  const romaji=$("fromaji").value.trim();
+  const es=$("fes").value.trim();
+  if(!jp||!es)return;
+
+  if(currentFolderId===KANJI_FOLDER_ID){
+    if(!KANJI_TEST_RE.test(jp)){
+      alert("En la carpeta Kanji, el campo Japonés debe incluir al menos un kanji.");
+      return;
+    }
+  }else{
+    if(KANJI_TEST_RE.test(jp)){
+      alert("Las palabras de vocabulario deben escribirse en hiragana y/o katakana. Los kanji se agregan por separado en la carpeta Kanji.");
+      return;
+    }
+    if(!ALLOWED_KANA_RE.test(jp)){
+      alert("Usá hiragana y/o katakana en el campo Japonés.");
+      return;
+    }
+  }
+
+  if(currentFolderId==="all") return;
+  const folderIds=[currentFolderId];
+
+  state.cards.push({id:cardId(),jp,romaji,es,folderIds});
+  save();
+  e.target.reset();
+  startNewRound();
+};
+
+function renderStudyList(){
+  // El listado inferior refleja exactamente el mazo aleatorio de la ronda actual.
+  const cards=[...studyDeck];
+  $("cardList").innerHTML="";
+
+  if(!cards.length){
+    $("cardList").innerHTML='<div class="empty-card">Esta carpeta está vacía. Las palabras que agregues van a aparecer acá.</div>';
+    return;
+  }
+
+  cards.forEach(c=>{
+    const row=document.createElement("div"); row.className="item";
+    const text=document.createElement("div");
+    const strong=document.createElement("strong"); strong.textContent=c.jp;
+    const span=document.createElement("span"); span.textContent=c.romaji||"";
+    text.append(strong);
+    if(c.romaji) text.append(span);
+
+
+    makeSwipeActions(
+      row,text,
+      ()=>editCard(c),
+      ()=>{
+        if(!confirm("¿Eliminar esta tarjeta?"))return;
+        state.cards=state.cards.filter(x=>x.id!==c.id);
+        save(); startNewRound();
+      }
+    );
+
+    $("cardList").append(row);
+  });
+}
+
+function editCard(c){
+  const jp=prompt("Japonés:",c.jp); if(jp===null)return;
+  const romaji=prompt("Romaji:",c.romaji||""); if(romaji===null)return;
+  const es=prompt("Español:",c.es); if(es===null)return;
+
+  const nextJp=jp.trim()||c.jp;
+  const isKanjiCard=(c.folderIds||[]).includes(KANJI_FOLDER_ID);
+  if(isKanjiCard){
+    if(!KANJI_TEST_RE.test(nextJp)){
+      alert("Esta tarjeta pertenece a Kanji y debe incluir al menos un kanji.");
+      return;
+    }
+  }else{
+    if(KANJI_TEST_RE.test(nextJp) || !ALLOWED_KANA_RE.test(nextJp)){
+      alert("Las palabras de vocabulario deben escribirse en hiragana y/o katakana.");
+      return;
+    }
+  }
+
+  c.jp=nextJp;
+  c.romaji=romaji.trim();
+  c.es=es.trim()||c.es;
+  c.folderIds=[isKanjiCard?KANJI_FOLDER_ID:(c.folderIds||[])[0]].filter(Boolean);
+
+  save();
+  startNewRound();
+}
+
+renderHome();
+</script>
+</body>
+</html>
